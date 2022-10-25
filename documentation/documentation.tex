@@ -1,0 +1,50 @@
+\documentclass[a4paper,titlepage,12pt]{report}
+\usepackage{frontespizio}
+\usepackage{geometry}
+\usepackage{lmodern}
+\usepackage[cache=false]{minted}
+\usemintedstyle{friendly}
+\usepackage[english]{babel}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{imakeidx}[column=1, title=Indice, intoc]
+\usepackage{subfig}
+\usepackage{graphicx}
+\definecolor{blu_pant}{RGB}{0, 64, 122}
+\geometry{bmargin=3.5cm, rmargin=2.5cm, lmargin=2.5cm, footnotesep=1cm}
+\usepackage{setspace}
+\setstretch{1.5}
+\makeindex[columns=1, title=Indice, intoc]
+\begin{document}
+{\fontfamily{lmr}\selectfont
+\begin{frontespizio}
+\Istituzione{University of Pisa}
+\Divisione{Department of Computer Science}
+\Scuola{Master's Degree of Computer Science \\(Artificial Intelligence)}
+\Piede{Academic year 2022/2023}
+\Titoletto{Artificial Intelligence Fundamentals}
+\Titolo{\textcolor{black}{Football-betting Detection System}}
+\NCandidato{Project made by}
+\Rientro{2.5cm}
+\Candidato{Andrea Tufo}
+\NRelatore{Professor}{}
+\Relatore{Vincenzo Lomonaco}
+\end{frontespizio}
+
+
+
+\pagebreak
+
+
+
+\tableofcontents
+
+
+
+\chapter{
+Introduction\index{Introduction}}
+In this document all the specifications of the project can be found, including not only theorical explainations, but also instances, useful to enucleate the code written entirely in python.\\
+The first chapter is going to introduce how the projects actually works, and why it would be useful for football and more in general for sport.This section is also important to figure out the idea behind the algorithm and how all the development has been organized.\\
+All the mainly difficulties that I faced during the development and all the most important issues that my algorithm has, are listed in the end of this document, where are explained some possible solutions too, in order to solve them and improve the algorithm.
+
+
+\end{document}
