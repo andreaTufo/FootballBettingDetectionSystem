@@ -10,7 +10,7 @@
 import csv
 
 # Global variables
-DATASET_PATH = "FootballDataEurope/FootballDataEurope.csv"
+DATASET_PATH = "archive/ginf.csv"
 dataVal = []
 a = 0
 
@@ -22,21 +22,21 @@ def filter_values():
     global a
     
     with open(DATASET_PATH, newline=(''), encoding=('utf-8'), errors=('ignore')) as csvFile:
-        reader = csv.DictReader(csvFile, delimiter=";")
+        reader = csv.DictReader(csvFile, delimiter=",")
         
         for j,row in enumerate(reader):
-           if row["league_name"] == "Italy Serie A" and row["season"] == "2015/2016":
-               temp = {'id' : row["id"],
-                       'home_team' : row["home_team"],
-                       'away_team': row["away_team"],
-                       'home_team_goal' : row["home_team_goal"],
-                       'away_team_goal' : row["away_team_goal"], 
-                       'homeVP' : float(100/float(row["B365H"])),   # home victory probability (with aggio)
-                       'DP' : float(100/float(row["B365D"])),       # draw probability (with aggio)
-                       'awayVP' : float(100/float(row["B365A"])),   # away victory probability (with aggio)
-                       'totalP' : float(100/float(row["B365H"]))    # total probability with aggio
-                                   + float(100/float(row["B365D"])) 
-                                   + float(100/float(row["B365A"]))} 
+           if row["league"] == "I1" and row["season"] == "2012":
+               temp = {'id' : row["id_odsp"],
+                       'home_team' : row["ht"],
+                       'away_team': row["at"],
+                       'home_team_goal' : row["fthg"],
+                       'away_team_goal' : row["at"], 
+                       'homeVP' : float(100/float(row["odd_h"])),   # home victory probability (with aggio)
+                       'DP' : float(100/float(row["odd_d"])),       # draw probability (with aggio)
+                       'awayVP' : float(100/float(row["odd_a"])),   # away victory probability (with aggio)
+                       'totalP' : float(100/float(row["odd_h"]))    # total probability with aggio
+                                   + float(100/float(row["odd_d"])) 
+                                   + float(100/float(row["odd_a"]))} 
                dataVal.append(temp)
             
 
