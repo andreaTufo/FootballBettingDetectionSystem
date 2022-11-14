@@ -16,7 +16,9 @@ DATASET_PATH_FILTERED = "archive/filtered_dataset.csv"
 dataVal = []
 
 
-
+# takes the values directly from the csv file in which the data have already been filtered.
+# if the file is empty (is the first run of the code) the function calls some utilities in order 
+# to initialite this file
 def get_filtered_values():
     
     global dataVal
@@ -24,6 +26,7 @@ def get_filtered_values():
     with open(DATASET_PATH_FILTERED, newline=(''), encoding=('utf-8'), errors=('ignore')) as csvFile:
         reader = csv.DictReader(csvFile, delimiter=",")
             
+        print('loading filtered data...' )
         for row in reader:
              temp = {'id_odsp' : row["id_odsp"],
                         'home_team' : row["home_team"],
@@ -65,6 +68,7 @@ def filter_values():
     with open(DATASET_PATH_MATCH, newline=(''), encoding=('utf-8'), errors=('ignore')) as csvFile:
         reader = csv.DictReader(csvFile, delimiter=",")
         
+       
         for row in reader:
            if row["league"] == "I1" and row["season"] == "2012":
                temp = {'id_odsp' : row["id_odsp"],
@@ -87,7 +91,7 @@ def filter_values():
                                    + float(100/float(row["odd_a"]))} 
                dataVal.append(temp)
                
-
+# seek the events of a match, using the events.csv file (attemps, post, shots on target, penalties)
 def get_attempts(row):
     
     global dataVal
@@ -120,18 +124,17 @@ def get_attempts(row):
             
             
     
-    
+# for each match calls get_attempts
 def get_all_attempts():
     
     global dataVal
     
     for i,row in enumerate(dataVal):
-     print('\rloading and filtering  - - -  ' + str("%.2f" % float(i*100/380)) + "% " + str(i) , end='') 
+     print('\rloading and filtering  - - -  ' + str("%.2f" % float(i*100/380)) + "%" , end='') 
      if row['adv_stats'] == 'TRUE':
          get_attempts(row)
         
-
-
+# write the filtered dataset on a file
 def write_filtered_dataset():
     
     with open(DATASET_PATH_FILTERED, 'w', encoding='UTF8', newline='') as f:
