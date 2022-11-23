@@ -8,6 +8,8 @@
 """
 
 import csv
+import math
+from scipy.stats import norm
 
 # Global variables
 K=100
@@ -16,7 +18,8 @@ DATASET_PATH_MATCH = "archive/ginf.csv"
 DATASET_PATH_EVENTS = "archive/events.csv"
 DATASET_PATH_FILTERED = "archive/filtered_dataset.csv"
 dataVal = []
-
+sigma2UGI=0
+meanUGI=0
 
 
 
@@ -55,8 +58,43 @@ def get_num_of_shots(location):
         
         
         
+def calculate_mean_and_sigma2_UGI():
+    
+    global dataVal
+    global meanUGI
+    global sigma2UGI
+    
+    summatory=0
+    count=0
+    
+    for el in dataVal:
+        count += 1
+        summatory += float(el['UGI'])
         
+    meanUGI = summatory/count
+    
+    summatory=0
+    for el in dataVal:
+        summatory += math.pow((float(el['UGI']) - meanUGI), 2)
+    
+    sigma2UGI = summatory/count
         
+    
+    
+#probability for a value x to be in a interval [a,b]
+def sector_probabilitoes_UGI(a,b):
+    
+    return norm.cdf(b, meanUGI, math.sqrt(sigma2UGI)) - norm.cdf(a, meanUGI, math.sqrt(sigma2UGI))
+    
+    
+    
+def calculate_probabilities_UGI():
+    
+    interval=meanUGI/math.sqrt(sigma2UGI)
+    
+    sector1 = sector_probabilitoes_UGI(meanUGI - interval, meanUGI+interval)
+    
+    
 
 # takes the values directly from the csv file in which the data have already been filtered.
 # if the file is empty (is the first run of the code) the function calls some utilities in order 
@@ -96,8 +134,7 @@ def get_filtered_values():
             get_all_attempts()
             write_filtered_dataset()
     
-     
-            
+        
 
 
 # takes the values from the csv file and puts them into an array after a filtering by league and season
@@ -285,15 +322,17 @@ def calculate_UGI():
             if match['home_team_goal'] != '0' or match['away_team_goal'] != '0':
                 match['UGI'] = float((int(match['home_team_goal']) + int(match['away_team_goal']))/(type_3*3 + type_2*2 + type_1))*K
             else:
-                match['UGI'] = float((type_3*3 + type_2*2 + type_1))
+                match['UGI'] = 0
         
-        
+      
+
             
 
 
 get_filtered_values()
 calculate_UGI()
-
+calculate_mean_and_sigma2_UGI()
+calculate_probabilities_UGI()
 
 
 
