@@ -35,7 +35,7 @@ transition_model = []
 novara_first_match_goal_probabilites={'0':0.30, '1':0.32, '2':0.18, '3':0.13, '>3': 0.07}
 udinese_first_match_goal_probabilites={'0':0.25, '1':0.29, '2':0.22, '3':0.14, '>3': 0.1}
 
-##################################################### UTILITIES #################################################
+###################################################### UTILITIES ###################################################
 
 def is_high_UGI_sector(UGI, meanUGI, sigma2UGI):
     interval=meanUGI/math.sqrt(sigma2UGI)
@@ -151,7 +151,7 @@ def get_match_id():
     
     return -1
             
-def get_5_matches_befor_and_after():
+def get_5_matches_before_and_after():
     match_id = get_match_id()    
     
     
@@ -159,7 +159,7 @@ def get_5_matches_befor_and_after():
         print()
         
     
-################################################# FILTERING FUNCTIONS ##############################################
+################################################# FILTERING FUNCTIONS ################################################
 
 # takes the values directly from the csv file in which the data have already been filtered.
 # if the file is empty (is the first run of the code) the function calls some utilities in order 
@@ -381,8 +381,7 @@ def calculate_UGI():
           17	More than 35 yards
           18	More than 40 yards
           19	Not recorded
-        
-                        
+                         
     """
 
     
@@ -393,7 +392,7 @@ def calculate_UGI():
         
         if match['adv_stats'] == 'TRUE': 
                 match['UGI_home'] = float(home_type_3*3 + home_type_2*2 + home_type_1)
-                match['UGI_away'] = float(away_type_3*3 + away_type_2*2 + away_type_1*1)        
+                match['UGI_away'] = float(away_type_3*3 + away_type_2*2 + away_type_1)        
       
 
             
@@ -402,7 +401,7 @@ def calculate_UGI():
 get_filtered_values()
 calculate_UGI()
 get_Udinese_and_Novara_matches()
-get_5_matches_befor_and_after()
+get_5_matches_before_and_after()
 
 
 
