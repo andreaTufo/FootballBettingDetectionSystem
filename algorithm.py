@@ -18,12 +18,35 @@ DATASET_PATH_MATCH = "archive/ginf.csv"
 DATASET_PATH_EVENTS = "archive/events.csv"
 DATASET_PATH_FILTERED = "archive/filtered_dataset.csv"
 dataVal = []
-sigma2UGI=0
-meanUGI=0
+sigma2UGI={'UGI_home' :0,
+           'UGI_away':0}
 
+meanUGI={'UGI_home' :0,
+         'UGI_away':0}
 
+sectorHighUGI=0
+sectorLowUGI=0
 
-### UTILITIES ###
+udinese_matches=[]
+novara_matches=[]
+
+transition_model = []
+
+novara_first_match_goal_probabilites={'0':0.30, '1':0.32, '2':0.18, '3':0.13, '>3': 0.07}
+udinese_first_match_goal_probabilites={'0':0.25, '1':0.29, '2':0.22, '3':0.14, '>3': 0.1}
+
+##################################################### UTILITIES #################################################
+
+def is_high_UGI_sector(UGI, meanUGI, sigma2UGI):
+    interval=meanUGI/math.sqrt(sigma2UGI)
+    
+    
+    if UGI < meanUGI - (2*interval):
+        return False
+    
+    return True
+    
+    
 
 def get_shot_type(position):
     if position == '3' or position == '10' or position == '12' or position == '13' or position == '14':
@@ -67,17 +90,22 @@ def calculate_mean_and_sigma2_UGI():
     summatory=0
     count=0
     
-    for el in dataVal:
-        count += 1
-        summatory += float(el['UGI'])
+    UGI=['UGI_home','UGI_away']
+    
+    for ugi in UGI:
+        summatory=0
+        count=0
+        for el in dataVal:
+            count += 1
+            summatory += float(el[ugi])
+            
+        meanUGI[ugi] = summatory/count
         
-    meanUGI = summatory/count
-    
-    summatory=0
-    for el in dataVal:
-        summatory += math.pow((float(el['UGI']) - meanUGI), 2)
-    
-    sigma2UGI = summatory/count
+        summatory=0
+        for el in dataVal:
+            summatory += math.pow((float(el[ugi]) - meanUGI), 2)
+        
+        sigma2UGI[ugi] = summatory/count
         
     
     
@@ -88,13 +116,50 @@ def sector_probabilitoes_UGI(a,b):
     
     
     
-def calculate_probabilities_UGI():
+def calculate_probabilities_UGI(meanUGI, sigma2UGI):
+    
+    global sectorHighUGI, sectorLowUGI
     
     interval=meanUGI/math.sqrt(sigma2UGI)
+
+
+    sectorHighUGI = float(norm.cdf(meanUGI + (2*interval), meanUGI, math.sqrt(sigma2UGI)))    
+
     
-    sector1 = sector_probabilitoes_UGI(meanUGI - interval, meanUGI+interval)
+    sectorLowUGI = float(norm.cdf(meanUGI - (2*interval), meanUGI, math.sqrt(sigma2UGI)))    
+
+    
+def get_Udinese_and_Novara_matches():
+    
+    global dataVal
+    global udinese_matches
+    global novara_matches
+    
+    for el in dataVal:
+        if el['home_team'] == 'Udinese' or el['away_team'] == 'Udinese':
+            udinese_matches.append(el)
+            
+        elif el['home_team'] == 'Novara' or el['away_team'] == 'Novara':
+            novara_matches.append(el)
+            
+def get_match_id():
+    global udinese_matches
+    
+    for i,el in enumerate(udinese_matches):
+        if el['home_team'] == 'Udinese' and el['away_team'] == 'Novara':
+            return i
+    
+    return -1
+            
+def get_5_matches_befor_and_after():
+    match_id = get_match_id()    
     
     
+    if match_id != -1:
+        print()
+        
+    
+################################################# FILTERING FUNCTIONS ##############################################
 
 # takes the values directly from the csv file in which the data have already been filtered.
 # if the file is empty (is the first run of the code) the function calls some utilities in order 
@@ -118,8 +183,10 @@ def get_filtered_values():
                         'shots_on_target' : row['shots_on_target'],
                         'post_hit': row['post_hit'],
                         'penalties': row['penalties'],
-                        'location': row['location'],
-                        'UGI' : row['UGI'],                                
+                        'location_home': row['location_home'],
+                        'location_away': row['location_away'],
+                        'UGI_home' : row['UGI_home'], 
+                        'UGI_away' : row['UGI_away'],                                    
                         'homeVP' : row['homeVP'],
                         'DP' : row['DP'],
                         'awayVP' : row['awayVP'],
@@ -160,8 +227,10 @@ def filter_values():
                        'shots_on_target' : 0,
                        'post_hit': 0,
                        'penalties': 0,
-                       'location': [],
-                       'UGI' : 0,                                   # Potential Goals Index 
+                       'location_home': [],
+                       'location_away': [],
+                       'UGI_home' : 0,
+                       'UGI_away' : 0,                                          # Potential Goals Index 
                        'homeVP' : float(100/float(row["odd_h"])),   # home victory probability (with aggio)
                        'DP' : float(100/float(row["odd_d"])),       # draw probability (with aggio)
                        'awayVP' : float(100/float(row["odd_a"])),   # away victory probability (with aggio)
@@ -208,7 +277,8 @@ def get_attempts(row):
         reader = csv.DictReader(csvFile, delimiter=",")
         
         shots = 0
-        locations = []
+        locations_home = []
+        locations_away = []
         shots_on_target = 0
         post_hit = 0
         for el in reader:
@@ -220,13 +290,17 @@ def get_attempts(row):
                 if el['shot_outcome'] == '4':
                     shots_on_target += 1
                     post_hit += 1
-                if el['location'] != 'NA' and el['event_type'] == '1':
-                    locations.append(el['location'])
+                if el['location'] != 'NA' and el['event_type'] == '1' and el['is_goal'] == '0':
+                    if el['event_team'] == row['home_team']:
+                        locations_home.append(el['location'])
+                    elif el['event_team'] == row['away_team']:
+                        locations_away.append(el['location'])
             
         row['shots'] = shots
         row['shots_on_target'] = shots_on_target
         row['post_hit'] = post_hit
-        row['location'] = locations
+        row['location_home'] = locations_home
+        row['location_away'] = locations_away
             
                     
             
@@ -248,7 +322,7 @@ def write_filtered_dataset():
     
     with open(DATASET_PATH_FILTERED, 'w', encoding='UTF8', newline='') as f:
         fieldnames = ['id_odsp', 'home_team', 'away_team', 'home_team_goal', 'away_team_goal', 
-                      'adv_stats', 'shots', 'shots_on_target', 'post_hit', 'penalties', 'location', 'UGI', 'homeVP', 'DP', 'awayVP', 'totalP']
+                      'adv_stats', 'shots', 'shots_on_target', 'post_hit', 'penalties', 'location_home','location_away', 'UGI_home', 'UGI_away', 'homeVP', 'DP', 'awayVP', 'totalP']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(dataVal)
@@ -310,20 +384,16 @@ def calculate_UGI():
         
                         
     """
-    type_3=0
-    type_2=0
-    type_1=0
+
     
     for match in dataVal:
-        (type_3, type_2, type_1) = get_num_of_shots(match['location'])
+        (home_type_3, home_type_2, home_type_1) = get_num_of_shots(match['location_home'])
+        (away_type_3, away_type_2, away_type_1) = get_num_of_shots(match['location_away'])
         
         
         if match['adv_stats'] == 'TRUE': 
-            if match['home_team_goal'] != '0' or match['away_team_goal'] != '0':
-                match['UGI'] = float((int(match['home_team_goal']) + int(match['away_team_goal']))/(type_3*3 + type_2*2 + type_1))*K
-            else:
-                match['UGI'] = 0
-        
+                match['UGI_home'] = float(home_type_3*3 + home_type_2*2 + home_type_1)
+                match['UGI_away'] = float(away_type_3*3 + away_type_2*2 + away_type_1*1)        
       
 
             
@@ -331,9 +401,8 @@ def calculate_UGI():
 
 get_filtered_values()
 calculate_UGI()
-calculate_mean_and_sigma2_UGI()
-calculate_probabilities_UGI()
-
+get_Udinese_and_Novara_matches()
+get_5_matches_befor_and_after()
 
 
 
