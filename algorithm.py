@@ -10,19 +10,19 @@
 import csv
 import math
 from scipy.stats import norm
+from aima_python.probability import HiddenMarkovModel
+from aima_python.utils import print_table
+from aima_python.notebook import psource, pseudocode, heatmap
 
 # Global variables
-K=100
 NO_GOAL=0.1
 DATASET_PATH_MATCH = "archive/ginf.csv"
 DATASET_PATH_EVENTS = "archive/events.csv"
 DATASET_PATH_FILTERED = "archive/filtered_dataset.csv"
 dataVal = []
-sigma2UGI={'UGI_home' :0,
-           'UGI_away':0}
+sigma2UGI=0
 
-meanUGI={'UGI_home' :0,
-         'UGI_away':0}
+meanUGI=0
 
 sectorHighUGI=0
 sectorLowUGI=0
@@ -30,18 +30,83 @@ sectorLowUGI=0
 udinese_matches=[]
 novara_matches=[]
 
-transition_model = []
+
 
 novara_first_match_goal_probabilites={'0':0.30, '1':0.32, '2':0.18, '3':0.13, '>3': 0.07}
 udinese_first_match_goal_probabilites={'0':0.25, '1':0.29, '2':0.22, '3':0.14, '>3': 0.1}
 
+probSectHToSectH=0
+probSectHToSectL=0 
+probSectLToSectH=0
+probSectLToSectL=0
+
+transition_model = [[probSectHToSectH, probSectHToSectL], [probSectLToSectL,probSectLToSectH]]
 ###################################################### UTILITIES ###################################################
 
-def is_high_UGI_sector(UGI, meanUGI, sigma2UGI):
+def transition_model_calculation(team='Cesena'):
+    
+    global dataVal, probSectHToSectH, probSectHToSectL, probSectLToSectH, probSectLToSectL
+    
+    prevSect=''
+    
+    sectHTosectH=0
+    sectHTosectL=0
+    sectLTosectL=0
+    sectLTosectH=0
+    
+    for el in dataVal:
+        if el['home_team'] == team:
+            if prevSect.__len__() == 0:
+                if is_high_UGI_sector(el['UGI_home']):
+                    prevSect = 'h'
+                else: prevSect = 'l'
+            else:
+                if prevSect == 'h' and is_high_UGI_sector(float(el['UGI_home'])):
+                    sectHTosectH += 1
+                elif prevSect == 'h' and not is_high_UGI_sector(float(el['UGI_home'])):
+                    sectHTosectL += 1
+                    prevSect = 'l'
+                elif prevSect == 'l' and is_high_UGI_sector(float(el['UGI_home'])):
+                    sectLTosectH += 1
+                    prevSect = 'h'
+                elif prevSect == 'l' and not is_high_UGI_sector(float(el['UGI_home'])):
+                    sectLTosectL += 1
+        elif el['away_team'] == team:
+            if prevSect.__len__() == 0:
+                if is_high_UGI_sector(el['UGI_away']):
+                    prevSect = 'h'
+                else: prevSect = 'l'
+            else:
+                if prevSect == 'h' and is_high_UGI_sector(float(el['UGI_away'])):
+                    sectHTosectH += 1
+                elif prevSect == 'h' and not is_high_UGI_sector(float(el['UGI_away'])):
+                    sectHTosectL += 1
+                    prevSect = 'l'
+                elif prevSect == 'l' and is_high_UGI_sector(float(el['UGI_away'])):
+                    sectLTosectH += 1
+                    prevSect = 'h'
+                elif prevSect == 'l' and not is_high_UGI_sector(float(el['UGI_away'])):
+                    sectLTosectL += 1
+                    
+    probSectHToSectH=0
+    probSectHToSectL=0
+    probSectLToSectL=0
+    probSectLToSectH=0
+    
+    sum_ = sectHTosectH + sectHTosectL + sectLTosectH + sectLTosectL
+    
+    probSectHToSectH = float(sectHTosectH/sum_)
+    probSectHToSectL = float(sectHTosectL/sum_)
+    probSectLToSectH = float(sectLTosectH/sum_)
+    probSectLToSectL = float(sectLTosectL/sum_)
+    
+    
+
+def is_high_UGI_sector(UGI):
     interval=meanUGI/math.sqrt(sigma2UGI)
     
     
-    if UGI < meanUGI - (2*interval):
+    if UGI <= meanUGI - (2*interval):
         return False
     
     return True
@@ -81,7 +146,7 @@ def get_num_of_shots(location):
         
         
         
-def calculate_mean_and_sigma2_UGI():
+def calculate_mean_and_sigma2_UGI(team='Cesena'):
     
     global dataVal
     global meanUGI
@@ -89,36 +154,34 @@ def calculate_mean_and_sigma2_UGI():
     
     summatory=0
     count=0
-    
-    UGI=['UGI_home','UGI_away']
-    
-    for ugi in UGI:
-        summatory=0
-        count=0
-        for el in dataVal:
+
+    for el in dataVal:
+        if el['home_team'] == team:
             count += 1
-            summatory += float(el[ugi])
+            summatory += float(el['UGI_home'])
             
-        meanUGI[ugi] = summatory/count
+        elif el['away_team'] == team:
+            count += 1
+            summatory += float(el['UGI_away'])
         
-        summatory=0
-        for el in dataVal:
-            summatory += math.pow((float(el[ugi]) - meanUGI), 2)
+    meanUGI = summatory/count
+    
+    summatory=0
+    for el in dataVal:
+        if el['home_team'] == team:
+            summatory += math.pow((float(el['UGI_home']) - meanUGI), 2)
+            
+        elif el['away_team'] == team:
+            summatory += math.pow((float(el['UGI_away']) - meanUGI), 2)
         
-        sigma2UGI[ugi] = summatory/count
+    
+    sigma2UGI = summatory/count
         
     
     
-#probability for a value x to be in a interval [a,b]
-def sector_probabilitoes_UGI(a,b):
+def calculate_probabilities_UGI():
     
-    return norm.cdf(b, meanUGI, math.sqrt(sigma2UGI)) - norm.cdf(a, meanUGI, math.sqrt(sigma2UGI))
-    
-    
-    
-def calculate_probabilities_UGI(meanUGI, sigma2UGI):
-    
-    global sectorHighUGI, sectorLowUGI
+    global sectorHighUGI, sectorLowUGI, meanUGI, sigma2UGI
     
     interval=meanUGI/math.sqrt(sigma2UGI)
 
@@ -400,11 +463,14 @@ def calculate_UGI():
 
 get_filtered_values()
 calculate_UGI()
+calculate_mean_and_sigma2_UGI()
+transition_model_calculation()
 get_Udinese_and_Novara_matches()
 get_5_matches_before_and_after()
 
 
 
+hmm =  HiddenMarkovModel([], [])
 
 
 
