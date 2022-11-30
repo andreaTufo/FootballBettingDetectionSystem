@@ -3,3 +3,5 @@
 \contentsline {section}{\numberline {1.1} Sport-betting}{2}{}%
 \contentsline {section}{\numberline {1.2} Modus operandi}{3}{}%
 \contentsline {chapter}{\numberline {2} Implementation}{4}{}%
+\contentsline {section}{\numberline {2.1} Dataset and filtering}{4}{}%
+\contentsline {section}{\numberline {2.2} Potential Goal Index}{4}{}%

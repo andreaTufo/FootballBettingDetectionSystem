@@ -54,10 +54,19 @@ The \textit{modus operandi} is always the same, "bribe and earn", so "sport crim
 
 \section{
 Modus operandi}
-In order to choose the right way and so understand what kind of data my algorithm needs to work as expected, I stuidied how criminals operate, trying to find many information as possible on internet.\\
-Usually these lawbreakers rig a few matches per division in a season and, furthermore, also few teams are involved, maximum of three or four teams per division. For example in Serie A during the season 2011/2012, only two matches has been faked, for a total earning estimated between 300'000 and 500'000 euros, corrupting players who belong to only two teams. Accordingly, it's pretty difficult to detect anomalies observing all the season of a specific team, so it's important to highlight that especially in this case technology and human must work together to reach the goal and get rid of false-positive.\\
-Finally it's very important to say that bets can be carry out in two different ways: using less money per bet but making more bets using more betting brands or using more money per bet and only a few bets. The former is the most used, because of the spread of the money, in order to make who executes bets untreceable.
+In order to choose the right way and so understand what kind of data my algorithm needs to work as expected, I stuidied how criminals operate, trying to find many information as possible on the Internet.\\
+Usually these lawbreakers rig a few matches per division in a season and, furthermore, also few teams are involved, maximum of three or four teams per division. For example in Serie A during the season 2011/2012, only two matches has been faked, for a total earning estimated between 300'000 and 500'000 euros, corrupting players who belong to only two teams. Accordingly, it's quite difficult to detect anomalies observing all the season of a specific team, so it's important to highlight that, especially in this case, technology and human must work together to reach the goal and get rid of false-positive.\\
 
 \chapter{
 Implementation\index{Implementation}}
+For the implementation the main goal was to develop a system that relying and analyzing on matches football data, shows a percentage of "possible unfair match". The basic idea was to retrive some parameters and values from raw filtered data, collect them, and then looking for some anomalies. In the code has been used as case of study the 2012/2013 season of Serie A, so every match that belongs to the regular season. In my case there is one important metric, which is called \textit{"UGI" (Potential Goal Index)} and has the role to mesure how a team has been dangerous and offensive during a match, so this value is computed for each football team. 
+
+\section{
+Dataset and filtering}
+During the first fase, after the preparatoty study of the phenomenon, was to select a reliable dataset from the Internet, so in the project my choise was to pick up a dataset found on kaggle, which contains six seasons matches' data of five championships.
+
+\section{
+Potential Goal Index}
+The "UGI" is the main metrics on which the entire project lies on. It's made up by 
+
 \end{document}
