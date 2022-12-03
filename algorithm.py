@@ -10,7 +10,7 @@
 import csv
 import math
 from scipy.stats import norm
-from aima_python.probability import HiddenMarkovModel
+from aima_python.probability import *
 from aima_python.utils import print_table
 from aima_python.notebook import psource, pseudocode, heatmap
 
@@ -31,17 +31,68 @@ udinese_matches=[]
 novara_matches=[]
 
 
-
-novara_first_match_goal_probabilites={'0':0.30, '1':0.32, '2':0.18, '3':0.13, '>3': 0.07}
-udinese_first_match_goal_probabilites={'0':0.25, '1':0.29, '2':0.22, '3':0.14, '>3': 0.1}
+prior_novara=[0.62, 0.38]
+prior_udinese=[0.57, 0.43]
 
 probSectHToSectH=0
 probSectHToSectL=0 
 probSectLToSectH=0
 probSectLToSectL=0
 
-transition_model = [[probSectHToSectH, probSectHToSectL], [probSectLToSectL,probSectLToSectH]]
+probOver3HighUgi=0
+probUnder3LowUgi=0
+probOver3LowUgi=0
+probUnder3HighUgi=0
+
+evidences_udinese=[]
+evidences_novara=[]
+
+udinese_matches_of_intrest=[]
+novara_matches_of_intrest=[]
+
+
 ###################################################### UTILITIES ###################################################
+
+def get_sensor_model(team='Cagliari'):
+    global dataVal, probOver3HighUgi,probOver3LowUgi,probUnder3HighUgi,probUnder3LowUgi
+    
+    sumHighUgi=0
+    sumLowUgi=0
+    
+    for el in dataVal:
+        if el['home_team'] == team:
+            if is_high_UGI_sector(int(el['UGI_home'])):
+                sumHighUgi += 1
+                if int(el['home_team_goal']) > 1:
+                    probOver3HighUgi += 1
+                else: probUnder3HighUgi += 1
+            else:
+                sumLowUgi += 1
+                if int(el['home_team_goal']) > 1:
+                    probOver3LowUgi += 1
+                else: probUnder3LowUgi += 1
+        elif el['away_team'] == team:
+            if is_high_UGI_sector(int(el['UGI_away'])):
+                sumHighUgi += 1
+                if int(el['away_team_goal']) > 1:
+                    probOver3HighUgi += 1
+                else: probUnder3HighUgi += 1
+            else:
+                sumLowUgi += 1
+                if int(el['away_team_goal']) > 1:
+                    probOver3LowUgi += 1
+                else: probUnder3LowUgi += 1
+                
+    probOver3HighUgi = float(probOver3HighUgi/sumHighUgi)
+    probUnder3HighUgi = float(probUnder3HighUgi/sumHighUgi)
+    
+    
+    probOver3LowUgi = float(probOver3LowUgi/sumLowUgi)
+    probUnder3LowUgi = float(probUnder3LowUgi/sumLowUgi)
+
+    
+    
+    
 
 def transition_model_calculation(team='Cesena'):
     
@@ -205,22 +256,70 @@ def get_Udinese_and_Novara_matches():
         elif el['home_team'] == 'Novara' or el['away_team'] == 'Novara':
             novara_matches.append(el)
             
-def get_match_id():
-    global udinese_matches
-    
-    for i,el in enumerate(udinese_matches):
-        if el['home_team'] == 'Udinese' and el['away_team'] == 'Novara':
+def get_match_id(matches=udinese_matches):
+
+    for i,el in enumerate(matches):
+        if el['home_team'] == 'Novara' and el['away_team'] == 'Udinese':
             return i
     
     return -1
             
-def get_5_matches_before_and_after():
+def get_udinese_evidence_array():
+    global udinese_matches, evidences_udinese, udinese_matches_of_intrest
+    
     match_id = get_match_id()    
     
+  
+    start_index = match_id - 10;
+    end_index = match_id + 10;
     
-    if match_id != -1:
-        print()
-        
+    for i,el in enumerate(udinese_matches):
+        if i >= start_index and i < end_index:
+            udinese_matches_of_intrest.append(el)
+            if el['home_team'] == 'Udinese':
+                if int(el['home_team_goal']) > 1:
+                    evidences_udinese.append(True)
+                else: evidences_udinese.append(False)
+            else:
+                if int(el['away_team_goal']) > 1:
+                    evidences_udinese.append(True)
+                else: evidences_udinese.append(False)
+
+def get_novara_evidence_array():
+    global novara_matches, evidences_novara, novara_matches_of_intrest
+    
+    match_id = get_match_id()    
+    
+    start_index = match_id - 10;
+    end_index = match_id + 10;
+    
+    for i,el in enumerate(novara_matches):
+        if i >= start_index and i < end_index:
+            novara_matches_of_intrest.append(el)
+            if el['home_team'] == 'Novara':
+                if int(el['home_team_goal']) > 1:
+                    evidences_novara.append(True)
+                else: evidences_novara.append(False)
+            else:
+                if int(el['away_team_goal']) > 1:
+                    evidences_novara.append(True)
+                else: evidences_novara.append(False)
+                
+def unfair_match():
+    global dataVal
+    
+    match_id = get_match_id(dataVal)
+    
+    print(dataVal[match_id]['home_team'])
+    print(dataVal[match_id]['away_team'])
+    dataVal[match_id]['home_team_goal'] = '2'
+    dataVal[match_id]['away_team_goal'] = '1'
+    dataVal[match_id]['location_home']=['16','6','4','4']
+    dataVal[match_id]['location_away']=['18']
+    dataVal[match_id]['shots']='9'
+
+
+
     
 ################################################# FILTERING FUNCTIONS ################################################
 
@@ -458,38 +557,78 @@ def calculate_UGI():
                 match['UGI_away'] = float(away_type_3*3 + away_type_2*2 + away_type_1)        
       
 
-            
+
 
 
 get_filtered_values()
 calculate_UGI()
 calculate_mean_and_sigma2_UGI()
 transition_model_calculation()
+get_sensor_model()
 get_Udinese_and_Novara_matches()
-get_5_matches_before_and_after()
+get_udinese_evidence_array()
+get_novara_evidence_array()
 
 
 
-hmm =  HiddenMarkovModel([], [])
+transition_model = [[probSectHToSectH, probSectLToSectH], [probSectLToSectL,probSectHToSectL]]
+sensor_model = [[probOver3HighUgi, probOver3LowUgi],[probUnder3HighUgi, probUnder3LowUgi]]
+hmm = HiddenMarkovModel(transition_model, sensor_model)
+
+hmm.prior=prior_udinese
+belief_udinese = forward_backward(hmm, ev=evidences_udinese)
+
+hmm.prior = prior_novara
+belief_novara = forward_backward(hmm, ev=evidences_novara)
+
+print()
+print()
+print("################# FAIR MATCH ##################")
+print("TARGET MATCH: Novara - Udinese")
+print()
+print(udinese_matches_of_intrest[10]['home_team'], " ------ ", udinese_matches_of_intrest[10]['away_team'])
+print("   " + udinese_matches_of_intrest[10]['home_team_goal'], end="               ")
+print(udinese_matches_of_intrest[10]['away_team_goal'])
+print()
+print("Udinese probability to core less than or exactly one goal: "+  str("%.2f" % float(belief_udinese[10][1])))
+print("Novara probability to score less than or exactly one goal: "+  str("%.2f" % float(belief_novara[10][1])))
 
 
 
+unfair_match()
 
 
+calculate_UGI()
+calculate_mean_and_sigma2_UGI()
+transition_model_calculation()
+get_sensor_model()
+get_Udinese_and_Novara_matches()
+get_udinese_evidence_array()
+get_novara_evidence_array()
 
 
+transition_model = [[probSectHToSectH, probSectLToSectH], [probSectLToSectL,probSectHToSectL]]
+sensor_model = [[probOver3HighUgi, probOver3LowUgi],[probUnder3HighUgi, probUnder3LowUgi]]
+hmm = HiddenMarkovModel(transition_model, sensor_model)
+
+hmm.prior=prior_udinese
+belief_udinese = forward_backward(hmm, ev=evidences_udinese)
+
+hmm.prior = prior_novara
+belief_novara = forward_backward(hmm, ev=evidences_novara)
 
 
+print()
+print()
+print("################# UNFAIR MATCH ##################")
+print("Supposing to rig the match and fake it with this result:")
+print(udinese_matches_of_intrest[10]['home_team'], " ------ ", udinese_matches_of_intrest[10]['away_team'])
+print("   2", end="               ")
+print(1)
 
-
-
-
-
-
-
-
-
-
+print()
+print("Udinese probability to score more than one goal: "+  str("%.2f" % float(belief_udinese[10][0])))
+print("Novara probability to score more then one goal: "+  str("%.2f" % float(belief_novara[10][0])))
 
 
 
