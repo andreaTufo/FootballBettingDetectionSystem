@@ -10,9 +10,9 @@
 import csv
 import math
 from scipy.stats import norm
-from aima_python.probability import *
-from aima_python.utils import print_table
-from aima_python.notebook import psource, pseudocode, heatmap
+from lib.probability import *
+from lib.utils import print_table
+from lib.notebook import psource, pseudocode, heatmap
 
 # Global variables
 NO_GOAL=0.1
@@ -34,15 +34,17 @@ novara_matches=[]
 prior_novara=[0.62, 0.38]
 prior_udinese=[0.57, 0.43]
 
-probSectHToSectH=0
-probSectHToSectL=0 
-probSectLToSectH=0
-probSectLToSectL=0
 
-probOver3HighUgi=0
-probUnder3LowUgi=0
-probOver3LowUgi=0
-probUnder3HighUgi=0
+probOver1Over1=0
+probUnder1Under1=0
+probOver1Under1=0
+probUnder1Over1=0
+
+probHighUgiOver=0
+probHighUgiUnder=0
+probLowUgiOver=0
+probLowUgiUnder=0
+
 
 evidences_udinese=[]
 evidences_novara=[]
@@ -53,42 +55,48 @@ novara_matches_of_intrest=[]
 
 ###################################################### UTILITIES ###################################################
 
-def get_sensor_model(team='Cagliari'):
-    global dataVal, probOver3HighUgi,probOver3LowUgi,probUnder3HighUgi,probUnder3LowUgi
+
+def is_over1goal(goal):
+    if goal > 1:
+      return  True
+    return False
     
-    sumHighUgi=0
-    sumLowUgi=0
+def get_sensor_model(team='Cagliari'):
+    global dataVal, probHighUgiOver, probHighUgiUnder, probLowUgiOver, probLowUgiUnder
+    
+    over1=0
+    under1=0
     
     for el in dataVal:
         if el['home_team'] == team:
-            if is_high_UGI_sector(int(el['UGI_home'])):
-                sumHighUgi += 1
-                if int(el['home_team_goal']) > 1:
-                    probOver3HighUgi += 1
-                else: probUnder3HighUgi += 1
+            if is_over1goal(int(el['home_team_goal'])):
+                over1 += 1
+                if is_high_UGI_sector(int(el['UGI_home'])):
+                    probHighUgiOver += 1
+                else: probLowUgiOver += 1
             else:
-                sumLowUgi += 1
-                if int(el['home_team_goal']) > 1:
-                    probOver3LowUgi += 1
-                else: probUnder3LowUgi += 1
+                under1 += 1
+                if is_high_UGI_sector(int(el['UGI_home'])):
+                    probHighUgiUnder += 1
+                else: probLowUgiUnder += 1
         elif el['away_team'] == team:
-            if is_high_UGI_sector(int(el['UGI_away'])):
-                sumHighUgi += 1
-                if int(el['away_team_goal']) > 1:
-                    probOver3HighUgi += 1
-                else: probUnder3HighUgi += 1
+            if is_over1goal(int(el['away_team_goal'])):
+                over1 += 1
+                if is_high_UGI_sector(int(el['UGI_away'])):
+                    probHighUgiOver += 1
+                else: probLowUgiOver += 1
             else:
-                sumLowUgi += 1
-                if int(el['away_team_goal']) > 1:
-                    probOver3LowUgi += 1
-                else: probUnder3LowUgi += 1
+                under1 += 1
+                if is_high_UGI_sector(int(el['UGI_away'])):
+                    probHighUgiUnder += 1
+                else: probLowUgiUnder += 1
                 
-    probOver3HighUgi = float(probOver3HighUgi/sumHighUgi)
-    probUnder3HighUgi = float(probUnder3HighUgi/sumHighUgi)
+    probHighUgiOver = float(probHighUgiOver/over1)
+    probLowUgiOver = float(probLowUgiOver/over1)
     
     
-    probOver3LowUgi = float(probOver3LowUgi/sumLowUgi)
-    probUnder3LowUgi = float(probUnder3LowUgi/sumLowUgi)
+    probHighUgiUnder = float(probHighUgiUnder/under1)
+    probLowUgiUnder = float(probLowUgiUnder/under1)
 
     
     
@@ -96,60 +104,57 @@ def get_sensor_model(team='Cagliari'):
 
 def transition_model_calculation(team='Cesena'):
     
-    global dataVal, probSectHToSectH, probSectHToSectL, probSectLToSectH, probSectLToSectL
+    global dataVal, probOver1Over1, probUnder1Under1, probOver1Under1,probUnder1Over1
     
     prevSect=''
     
-    sectHTosectH=0
-    sectHTosectL=0
-    sectLTosectL=0
-    sectLTosectH=0
+    overToOver=0
+    overToUnder=0
+    underToUnder=0
+    underToOver=0
     
     for el in dataVal:
         if el['home_team'] == team:
             if prevSect.__len__() == 0:
-                if is_high_UGI_sector(el['UGI_home']):
-                    prevSect = 'h'
-                else: prevSect = 'l'
+                if is_over1goal(int(el['home_team_goal'])):
+                    prevSect = 'o'
+                else: prevSect = 'u'
             else:
-                if prevSect == 'h' and is_high_UGI_sector(float(el['UGI_home'])):
-                    sectHTosectH += 1
-                elif prevSect == 'h' and not is_high_UGI_sector(float(el['UGI_home'])):
-                    sectHTosectL += 1
-                    prevSect = 'l'
-                elif prevSect == 'l' and is_high_UGI_sector(float(el['UGI_home'])):
-                    sectLTosectH += 1
-                    prevSect = 'h'
-                elif prevSect == 'l' and not is_high_UGI_sector(float(el['UGI_home'])):
-                    sectLTosectL += 1
+                if prevSect == 'o' and is_over1goal(int(el['home_team_goal'])):
+                    overToOver += 1
+                elif prevSect == 'o' and not is_over1goal(int(el['home_team_goal'])):
+                    overToUnder += 1
+                    prevSect = 'u'
+                elif prevSect == 'u' and is_over1goal(int(el['home_team_goal'])):
+                    underToOver += 1
+                    prevSect = 'o'
+                elif prevSect == 'u' and not is_over1goal(int(el['home_team_goal'])):
+                    underToUnder += 1
         elif el['away_team'] == team:
             if prevSect.__len__() == 0:
-                if is_high_UGI_sector(el['UGI_away']):
-                    prevSect = 'h'
-                else: prevSect = 'l'
+                if is_over1goal(int(el['away_team_goal'])):
+                    prevSect = 'o'
+                else: prevSect = 'u'
             else:
-                if prevSect == 'h' and is_high_UGI_sector(float(el['UGI_away'])):
-                    sectHTosectH += 1
-                elif prevSect == 'h' and not is_high_UGI_sector(float(el['UGI_away'])):
-                    sectHTosectL += 1
-                    prevSect = 'l'
-                elif prevSect == 'l' and is_high_UGI_sector(float(el['UGI_away'])):
-                    sectLTosectH += 1
-                    prevSect = 'h'
-                elif prevSect == 'l' and not is_high_UGI_sector(float(el['UGI_away'])):
-                    sectLTosectL += 1
+                if prevSect == 'o' and is_over1goal(int(el['away_team_goal'])):
+                    overToOver += 1
+                elif prevSect == 'o' and not is_over1goal(int(el['away_team_goal'])):
+                    overToUnder += 1
+                    prevSect = 'u'
+                elif prevSect == 'u' and is_over1goal(int(el['away_team_goal'])):
+                    underToOver += 1
+                    prevSect = 'o'
+                elif prevSect == 'u' and not is_over1goal(int(el['away_team_goal'])):
+                    underToUnder += 1
                     
-    probSectHToSectH=0
-    probSectHToSectL=0
-    probSectLToSectL=0
-    probSectLToSectH=0
+
     
-    sum_ = sectHTosectH + sectHTosectL + sectLTosectH + sectLTosectL
+    sum_ = overToOver + overToUnder + underToUnder + underToOver
     
-    probSectHToSectH = float(sectHTosectH/sum_)
-    probSectHToSectL = float(sectHTosectL/sum_)
-    probSectLToSectH = float(sectLTosectH/sum_)
-    probSectLToSectL = float(sectLTosectL/sum_)
+    probOver1Over1 = float(overToOver/sum_)
+    probOver1Under1= float(overToUnder/sum_)
+    probUnder1Under1 = float(underToUnder/sum_)
+    probUnder1Over1 = float(underToOver/sum_)
     
     
 
@@ -277,11 +282,11 @@ def get_udinese_evidence_array():
         if i >= start_index and i < end_index:
             udinese_matches_of_intrest.append(el)
             if el['home_team'] == 'Udinese':
-                if int(el['home_team_goal']) > 1:
+                if is_high_UGI_sector(float(el['UGI_home'])):
                     evidences_udinese.append(True)
                 else: evidences_udinese.append(False)
             else:
-                if int(el['away_team_goal']) > 1:
+                if is_high_UGI_sector(float(el['UGI_away'])):
                     evidences_udinese.append(True)
                 else: evidences_udinese.append(False)
 
@@ -297,11 +302,11 @@ def get_novara_evidence_array():
         if i >= start_index and i < end_index:
             novara_matches_of_intrest.append(el)
             if el['home_team'] == 'Novara':
-                if int(el['home_team_goal']) > 1:
+                if is_high_UGI_sector(float(el['UGI_home'])):
                     evidences_novara.append(True)
                 else: evidences_novara.append(False)
             else:
-                if int(el['away_team_goal']) > 1:
+                if is_high_UGI_sector(float(el['UGI_away'])):
                     evidences_novara.append(True)
                 else: evidences_novara.append(False)
                 
@@ -310,16 +315,17 @@ def unfair_match():
     
     match_id = get_match_id(dataVal)
     
-    print(dataVal[match_id]['home_team'])
-    print(dataVal[match_id]['away_team'])
     dataVal[match_id]['home_team_goal'] = '2'
-    dataVal[match_id]['away_team_goal'] = '1'
-    dataVal[match_id]['location_home']=['16','6','4','4']
-    dataVal[match_id]['location_away']=['18']
+    dataVal[match_id]['away_team_goal'] = '2'
+    dataVal[match_id]['location_home']=['16','6','4']
+    dataVal[match_id]['location_away']=['18', '17', '8','6']
     dataVal[match_id]['shots']='9'
 
 
-
+def print_ugi_sector(ugi):
+    if is_high_UGI_sector(float(ugi)):
+        return "HIGH"
+    return "LOW"
     
 ################################################# FILTERING FUNCTIONS ################################################
 
@@ -571,8 +577,8 @@ get_novara_evidence_array()
 
 
 
-transition_model = [[probSectHToSectH, probSectLToSectH], [probSectLToSectL,probSectHToSectL]]
-sensor_model = [[probOver3HighUgi, probOver3LowUgi],[probUnder3HighUgi, probUnder3LowUgi]]
+transition_model = [[probOver1Over1 , probUnder1Over1], [probUnder1Over1 ,probOver1Under1]]
+sensor_model = [[probHighUgiOver, probHighUgiUnder],[probLowUgiOver, probLowUgiUnder]]
 hmm = HiddenMarkovModel(transition_model, sensor_model)
 
 hmm.prior=prior_udinese
@@ -590,13 +596,24 @@ print(udinese_matches_of_intrest[10]['home_team'], " ------ ", udinese_matches_o
 print("   " + udinese_matches_of_intrest[10]['home_team_goal'], end="               ")
 print(udinese_matches_of_intrest[10]['away_team_goal'])
 print()
-print("Udinese probability to core less than or exactly one goal: "+  str("%.2f" % float(belief_udinese[10][1])))
-print("Novara probability to score less than or exactly one goal: "+  str("%.2f" % float(belief_novara[10][1])))
+if is_over1goal(int(udinese_matches_of_intrest[10]['away_team_goal'])):
+    print("Udinese scored more than one goal -> ",  end=" probability of: ")
+    print( str("%.2f" % float(belief_udinese[10][0])))
+else:
+    print("Udinese scored less than one goal",  end=" probability: of ")
+    print( str("%.2f" % float(belief_udinese[10][1])))
+  
+
+if is_over1goal(int(udinese_matches_of_intrest[10]['home_team_goal'])):
+    print("Novara scored more than one goal -> ",  end=" probability of: ")
+    print( str("%.2f" % float(belief_novara[10][0])))
+else:
+    print("Novara scored less than one goal",  end=" probability: of ")
+    print( str("%.2f" % float(belief_novara[10][1])))
 
 
 
 unfair_match()
-
 
 calculate_UGI()
 calculate_mean_and_sigma2_UGI()
@@ -607,8 +624,8 @@ get_udinese_evidence_array()
 get_novara_evidence_array()
 
 
-transition_model = [[probSectHToSectH, probSectLToSectH], [probSectLToSectL,probSectHToSectL]]
-sensor_model = [[probOver3HighUgi, probOver3LowUgi],[probUnder3HighUgi, probUnder3LowUgi]]
+transition_model = [[probOver1Over1 , probUnder1Over1], [probUnder1Over1 ,probOver1Under1]]
+sensor_model = [[probHighUgiOver, probHighUgiUnder],[probLowUgiOver, probLowUgiUnder]]
 hmm = HiddenMarkovModel(transition_model, sensor_model)
 
 hmm.prior=prior_udinese
@@ -618,20 +635,30 @@ hmm.prior = prior_novara
 belief_novara = forward_backward(hmm, ev=evidences_novara)
 
 
+
 print()
 print()
 print("################# UNFAIR MATCH ##################")
-print("Supposing to rig the match and fake it with this result:")
+print("Supposing to rig the match and fake it with this result and put a less number of shots for udinese and novara")
 print(udinese_matches_of_intrest[10]['home_team'], " ------ ", udinese_matches_of_intrest[10]['away_team'])
 print("   2", end="               ")
-print(1)
+print(2)
 
 print()
-print("Udinese probability to score more than one goal: "+  str("%.2f" % float(belief_udinese[10][0])))
-print("Novara probability to score more then one goal: "+  str("%.2f" % float(belief_novara[10][0])))
+if is_over1goal(int(udinese_matches_of_intrest[10]['away_team_goal'])):
+    print("Udinese scored more than one goal -> ",  end=" probability of: ")
+    print( str("%.2f" % float(belief_udinese[10][0])))
+else:
+    print("Udinese scored less than one goal",  end=" probability: of ")
+    print( str("%.2f" % float(belief_udinese[10][1])))
+  
 
-
-
+if is_over1goal(int(udinese_matches_of_intrest[10]['home_team_goal'])):
+    print("Novara scored more than one goal -> ",  end=" probability of: ")
+    print( str("%.2f" % float(belief_novara[10][0])))
+else:
+    print("Novara scored less than one goal",  end=" probability: of ")
+    print( str("%.2f" % float(belief_novara[10][1])))
 
 
 
