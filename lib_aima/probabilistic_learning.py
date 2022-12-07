@@ -2,7 +2,7 @@
 
 import heapq
 
-from lib.utils import weighted_sampler, product, gaussian
+from lib_aima.utils import weighted_sampler, product, gaussian
 
 
 class CountingProbDist:

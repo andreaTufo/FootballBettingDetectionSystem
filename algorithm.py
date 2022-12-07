@@ -6,13 +6,14 @@
 @Project: Football-betting detection System
 
 """
+import sys
+
 
 import csv
 import math
 from scipy.stats import norm
-from lib.probability import *
-from lib.utils import print_table
-from lib.notebook import psource, pseudocode, heatmap
+from lib_aima.probability import *
+import lib_aima.notebook
 
 # Global variables
 NO_GOAL=0.1
@@ -61,7 +62,7 @@ def is_over1goal(goal):
       return  True
     return False
     
-def get_sensor_model(team='Cagliari'):
+def get_sensor_model(team='Cesena'):
     global dataVal, probHighUgiOver, probHighUgiUnder, probLowUgiOver, probLowUgiUnder
     
     over1=0
@@ -600,7 +601,7 @@ if is_over1goal(int(udinese_matches_of_intrest[10]['away_team_goal'])):
     print("Udinese scored more than one goal -> ",  end=" probability of: ")
     print( str("%.2f" % float(belief_udinese[10][0])))
 else:
-    print("Udinese scored less than one goal",  end=" probability: of ")
+    print("Udinese scored less than one goal -> ",  end=" probability of: ")
     print( str("%.2f" % float(belief_udinese[10][1])))
   
 
@@ -608,7 +609,7 @@ if is_over1goal(int(udinese_matches_of_intrest[10]['home_team_goal'])):
     print("Novara scored more than one goal -> ",  end=" probability of: ")
     print( str("%.2f" % float(belief_novara[10][0])))
 else:
-    print("Novara scored less than one goal",  end=" probability: of ")
+    print("Novara scored less than one goal -> ",  end=" probability of ")
     print( str("%.2f" % float(belief_novara[10][1])))
 
 

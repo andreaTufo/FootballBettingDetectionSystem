@@ -10,11 +10,11 @@ from operator import eq, neg
 
 from sortedcontainers import SortedSet
 
-import lib.search
-from lib.utils import argmin_random_tie, count, first, extend
+import lib_aima.search
+from lib_aima.utils import argmin_random_tie, count, first, extend
 
 
-class CSP(lib.search.Problem):
+class CSP(lib_aima.search.Problem):
     """This class describes finite-domain Constraint Satisfaction Problems.
     A CSP is specified by the following inputs:
         variables   A list of variables; each is atomic (e.g. int or string).
@@ -1148,7 +1148,7 @@ def partition_domain(dom):
     return dom1, dom2
 
 
-class ACSearchSolver(lib.search.Problem):
+class ACSearchSolver(lib_aima.search.Problem):
     """A search problem with arc consistency and domain splitting
     A node is a CSP"""
 
