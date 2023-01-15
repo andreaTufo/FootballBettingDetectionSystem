@@ -1,10 +1,9 @@
 \babel@toc {english}{}\relax 
 \contentsline {chapter}{\numberline {1} Introduction}{2}{}%
 \contentsline {section}{\numberline {1.1} Sport-betting}{2}{}%
-\contentsline {section}{\numberline {1.2} Modus operandi}{3}{}%
-\contentsline {chapter}{\numberline {2} Implementation}{4}{}%
-\contentsline {section}{\numberline {2.1} Dataset}{4}{}%
-\contentsline {subsection}{\numberline {2.1.1} Events file}{5}{}%
-\contentsline {section}{\numberline {2.2} Filtering}{5}{}%
-\contentsline {subsection}{\numberline {2.2.1} Potential Goal Index}{5}{}%
-\contentsline {chapter}{\numberline {3} Final results and HMM application}{7}{}%
+\contentsline {chapter}{\numberline {2} Implementation}{3}{}%
+\contentsline {section}{\numberline {2.1} Dataset}{3}{}%
+\contentsline {subsection}{\numberline {2.1.1} Events file}{4}{}%
+\contentsline {section}{\numberline {2.2} Filtering}{4}{}%
+\contentsline {subsection}{\numberline {2.2.1} Offensive Potential Index}{4}{}%
+\contentsline {chapter}{\numberline {3} Final results and HMM application}{6}{}%

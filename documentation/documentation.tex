@@ -26,9 +26,6 @@
 \NCandidato{Project made by}
 \Rientro{2.5cm}
 \Candidato{Andrea Tufo}
-\NRelatore{Professor}{}
-\Relatore{Vincenzo Lomonaco}
-\Relatore{Maria Simi}
 \end{frontespizio}
 
 
@@ -53,18 +50,16 @@ The Sport-betting phenomenon is still nowadays one of the worse side of the spor
 The latter because football moves a huge amount of money, thus it's very easy to became millsionaire corrupting one or two match per season.\\
 The \textit{modus operandi} is always the same, "bribe and earn", so "sport criminals" used to corrupt players, who have the role to make the match ends as agreed, then criminals will be able to bet and so collect thier money.
 
-\section{
-Modus operandi}
-In order to choose the right way and so understand what kind of data my algorithm needs to work as expected, I stuidied how criminals operate, trying to find many information as possible on the Internet.\\
-Usually these lawbreakers rig a few matches per division in a season and, furthermore, also few teams are involved, maximum of three or four teams per division. For example in Serie A during the season 2011/2012, only two matches has been faked, for a total earning estimated between 300'000 and 500'000 euros, corrupting players who belong to only two teams. Accordingly, it's quite difficult to detect anomalies observing all the season of a specific team, so it's important to highlight that, especially in this case, technology and human must work together to reach the goal and get rid of false-positive.\\
 
 \chapter{
 Implementation\index{Implementation}}
-For the implementation the main goal was to develop a system that relying and analyzing on matches football data, shows a percentage of "possible unfair match". The basic idea was to retrive some parameters and values from raw filtered data, collect them, and then looking for some anomalies. In the code has been used as case of study the 2012/2013 season of Serie A, so every match that belongs to the regular season. In my case there is one important metric, which is called \textit{"UGI" (Potential Goal Index)} and has the role to mesure how a team has been dangerous and offensive during a match, so this value is computed for each football team. 
+The main goal was to develop a system that rely and analyze football matches data, showing a percentage of "possible unfair match". The basic idea was to retrive some parameters and values from raw filtered data, collect them, and then looking for some anomalies. In the code has been used as case of study the 2012/2013 season of Serie A, so every match that belongs to the regular season. In my case there is one important metric, which is called \textit{"OPI" (Offensive Potential Index)} and has the role to mesure how a team has been dangerous and offensive during a match, so this value is computed for each football team. 
+
+formula OPIOPI
 
 \section{
 Dataset}
-During the first fase, after the preparatoty study of the phenomenon, was to select a reliable dataset from the Internet, so in the project my choise was to pick up a dataset found on kaggle, which contains six seasons matches' data of five championships. Of course these raw datas were no ready to be used for my program, thus, filtering them and select only the needed ones was the first operation that I implemented. The dataset is made up two csv files, one "ginf.csv" that contains all the matches (with home and away team name, goals, stadium, season, league), while the second one called "events.csv", contains all the events per match and so fouls, shots, ball possesion losses, corners, penalties and more. These two files are connected like in DBs, every match in "ginf.csv"  has an unique id, that identifies it in the other file.\\
+During the first phase, after the inital study of the phenomenon, i had to select a reliable dataset from the Internet, so in the project my choise was to pick up a dataset found on kaggle, which contains six seasons data of five championships. Of course these raw datas were no ready to be used for my program, thus, filtering them and select only the needed ones was the first operation that I implemented. The dataset is made up two csv files, one "ginf.csv" that contains all the matches (with home and away team name, goals, stadium, season, league), while the second one called "events.csv", contains all the events per match and so fouls, shots, ball possesion losses, corners, penalties and more. These two files are connected like in DBs, every match in "ginf.csv"  has an unique id, that identifies it in the other file.\\
 All the first effort was focused on filtering all the data of the 2012/2013 italian season, collecting 380 matches, with all statistics and events. 
 
 \subsection{
@@ -78,15 +73,20 @@ The filtering phase has been very hard to implement because only during coding t
 During the first run of the algorithm a "filtered\_dataset.csv" file is generated, it contains all the data filtered in order to avoid to fetch and to filter more times the data from the biggest file, because it takes too much time to do it. 
 
 \subsection{
-Potential Goal Index}
-Pratically in my program I worked on only one json object, which contains all the data filtered and makes more easy get all the metrics from every single match. The biggest challenge  for me was to find out some parameter that could highlight how much offensive and dangerous a team is  during a match in average. And my idea was to get analize every match looking at the shots made by a team and them locations. So for all matches I group the two arrays of shots locations (one for home team and one for away team) into three group, each of this group has a weight that refers to the possibility to score, thus, fisrt group has weight one, so very low dangerous shot, the second one has weight two, and the third one has three as weight, and so high chances to score.\\
-Then I caluclated the cardinality of these three sets and after this I computed the \textit{UGI} summing the cardinalities timed for the weight of the group on which they belong to.
+Offensive Potential Index}
+Pratically in my program I worked on only one json object, which contains all the data filtered and makes more easy get all the metrics from every single match. The biggest challenge for me was to find out some parameters that would have highlighted how much offensive a team has been during a match in average. And my idea was to analyze every match looking at the shots made by a team and their locations. So for all matches I group the two arrays of shots locations (one for home team and one for away team) into three group, each of this group has a weight that refers to the possibility to score, thus, fisrt group has weight one, so very low dangerous shot, the second one has weight two, and the third one has three as weight, and so high chances to score.\\
+Then I caluclated the cardinality of these three sets and after this I computed the \textit{OPI} summing up the cardinalities timed for the weight of the group on which they belong to.
 
 
 \chapter{
 Final results and HMM application}
-The reason why I choose Hidden Model Markov as probability algorithm is due to how the dataset is made up. During the entire work I have never tought about what kind of algorithm I was going to use. I simply tried to elaborate datas thinking only on what can be usefull and what would not be used in the program. Finally when all the values, metrics and parametrics has been obtained from the files, I started to think on what algorithm I could use.\\
-I had two main parameters parameters per match: goal scored by the two team, the home and away team UGIs and the.
+In order to apply this model, a transition model and a sensor model are needed. The transition model is made up starting from two states, that are: less than 2 goals scored state and 2 or more than two goals scored by a team. So the algorithm calculates, taking as input a random team as sample, how many times in average a team goes in each state from a starting state.\\
+The sensor model is based on the OPI index, so the two evidences are: low OPI, and high OPI. Basically the system calculates the mean and the variation of all the team's OPIs taking all the matches OPI. Throught this two values I found a good interval in order to determine a low OPI situation (actual OPI less or equals than the interval) or a high OPI situation (actual OPI more than the interval). Accordingly, as what happens  for the transition models the program calculates for every state how many times in average we are in low and high OPI condition.\\
+interval formula
+In the output the algorithm shows the target match the final result and the probability that we are into a fixed match. Furthermore the algorithm shows some previous and next matches of both teams, with result and probability too. In my specific case the fixed match is Pescara 2 - Siena 3, and these are the results:
 
-
+\begin{tabular}{c c}
+\includegraphics[scale=0.3]{results1.png} &
+\includegraphics[scale=0.3]{results2.png}
+\end{tabular}
 \end{document}

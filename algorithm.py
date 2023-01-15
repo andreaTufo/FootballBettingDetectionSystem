@@ -11,6 +11,7 @@ import sys
 
 import csv
 import math
+from colorama import Back, Style
 from scipy.stats import norm
 from lib_aima.probability import *
 import lib_aima.notebook
@@ -21,19 +22,22 @@ DATASET_PATH_MATCH = "archive/ginf.csv"
 DATASET_PATH_EVENTS = "archive/events.csv"
 DATASET_PATH_FILTERED = "archive/filtered_dataset.csv"
 dataVal = []
-sigma2UGI=0
+sigma2OPI=0
 
-meanUGI=0
+meanOPI=0
 
-sectorHighUGI=0
-sectorLowUGI=0
+teamH="US Pescara"
+teamA="Siena"
 
-udinese_matches=[]
-novara_matches=[]
+sectorHighOPI=0
+sectorLowOPI=0
+
+teamH_matches=[]
+teamA_matches=[]
 
 
-prior_novara=[0.62, 0.38]
-prior_udinese=[0.57, 0.43]
+prior_teamA=[0.67, 0.33]
+prior_teamH=[0.31, 0.69]
 
 
 probOver1Over1=0
@@ -41,17 +45,17 @@ probUnder1Under1=0
 probOver1Under1=0
 probUnder1Over1=0
 
-probHighUgiOver=0
-probHighUgiUnder=0
-probLowUgiOver=0
-probLowUgiUnder=0
+probHighOPIOver=0
+probHighOPIUnder=0
+probLowOPIOver=0
+probLowOPIUnder=0
 
 
-evidences_udinese=[]
-evidences_novara=[]
+evidences_teamH=[]
+evidences_teamA=[]
 
-udinese_matches_of_intrest=[]
-novara_matches_of_intrest=[]
+teamH_matches_of_intrest=[]
+teamA_matches_of_intrest=[]
 
 
 ###################################################### UTILITIES ###################################################
@@ -62,8 +66,8 @@ def is_over1goal(goal):
       return  True
     return False
     
-def get_sensor_model(team='Cesena'):
-    global dataVal, probHighUgiOver, probHighUgiUnder, probLowUgiOver, probLowUgiUnder
+def get_sensor_model(team='Bologna'):
+    global dataVal, probHighOPIOver, probHighOPIUnder, probLowOPIOver, probLowOPIUnder
     
     over1=0
     under1=0
@@ -72,38 +76,38 @@ def get_sensor_model(team='Cesena'):
         if el['home_team'] == team:
             if is_over1goal(int(el['home_team_goal'])):
                 over1 += 1
-                if is_high_UGI_sector(int(el['UGI_home'])):
-                    probHighUgiOver += 1
-                else: probLowUgiOver += 1
+                if is_high_OPI_sector(int(el['OPI_home'])):
+                    probHighOPIOver += 1
+                else: probLowOPIOver += 1
             else:
                 under1 += 1
-                if is_high_UGI_sector(int(el['UGI_home'])):
-                    probHighUgiUnder += 1
-                else: probLowUgiUnder += 1
+                if is_high_OPI_sector(int(el['OPI_home'])):
+                    probHighOPIUnder += 1
+                else: probLowOPIUnder += 1
         elif el['away_team'] == team:
             if is_over1goal(int(el['away_team_goal'])):
                 over1 += 1
-                if is_high_UGI_sector(int(el['UGI_away'])):
-                    probHighUgiOver += 1
-                else: probLowUgiOver += 1
+                if is_high_OPI_sector(int(el['OPI_away'])):
+                    probHighOPIOver += 1
+                else: probLowOPIOver += 1
             else:
                 under1 += 1
-                if is_high_UGI_sector(int(el['UGI_away'])):
-                    probHighUgiUnder += 1
-                else: probLowUgiUnder += 1
+                if is_high_OPI_sector(int(el['OPI_away'])):
+                    probHighOPIUnder += 1
+                else: probLowOPIUnder += 1
                 
-    probHighUgiOver = float(probHighUgiOver/over1)
-    probLowUgiOver = float(probLowUgiOver/over1)
+    probHighOPIOver = float(probHighOPIOver/over1)
+    probLowOPIOver = float(probLowOPIOver/over1)
     
     
-    probHighUgiUnder = float(probHighUgiUnder/under1)
-    probLowUgiUnder = float(probLowUgiUnder/under1)
+    probHighOPIUnder = float(probHighOPIUnder/under1)
+    probLowOPIUnder = float(probLowOPIUnder/under1)
 
     
     
     
 
-def transition_model_calculation(team='Cesena'):
+def transition_model_calculation(team='Bologna'):
     
     global dataVal, probOver1Over1, probUnder1Under1, probOver1Under1,probUnder1Over1
     
@@ -159,11 +163,11 @@ def transition_model_calculation(team='Cesena'):
     
     
 
-def is_high_UGI_sector(UGI):
-    interval=meanUGI/math.sqrt(sigma2UGI)
+def is_high_OPI_sector(OPI):
+    interval=meanOPI/math.sqrt(sigma2OPI)
     
     
-    if UGI <= meanUGI - (2*interval):
+    if OPI <= meanOPI - (2*interval):
         return False
     
     return True
@@ -203,11 +207,11 @@ def get_num_of_shots(location):
         
         
         
-def calculate_mean_and_sigma2_UGI(team='Cesena'):
+def calculate_mean_and_sigma2_OPI(team='Bologna'):
     
     global dataVal
-    global meanUGI
-    global sigma2UGI
+    global meanOPI
+    global sigma2OPI
     
     summatory=0
     count=0
@@ -215,101 +219,101 @@ def calculate_mean_and_sigma2_UGI(team='Cesena'):
     for el in dataVal:
         if el['home_team'] == team:
             count += 1
-            summatory += float(el['UGI_home'])
+            summatory += float(el['OPI_home'])
             
         elif el['away_team'] == team:
             count += 1
-            summatory += float(el['UGI_away'])
+            summatory += float(el['OPI_away'])
         
-    meanUGI = summatory/count
+    meanOPI = summatory/count
     
     summatory=0
     for el in dataVal:
         if el['home_team'] == team:
-            summatory += math.pow((float(el['UGI_home']) - meanUGI), 2)
+            summatory += math.pow((float(el['OPI_home']) - meanOPI), 2)
             
         elif el['away_team'] == team:
-            summatory += math.pow((float(el['UGI_away']) - meanUGI), 2)
+            summatory += math.pow((float(el['OPI_away']) - meanOPI), 2)
         
     
-    sigma2UGI = summatory/count
+    sigma2OPI = summatory/count
         
     
     
-def calculate_probabilities_UGI():
+def calculate_probabilities_OPI():
     
-    global sectorHighUGI, sectorLowUGI, meanUGI, sigma2UGI
+    global sectorHighOPI, sectorLowOPI, meanOPI, sigma2OPI
     
-    interval=meanUGI/math.sqrt(sigma2UGI)
+    interval=meanOPI/math.sqrt(sigma2OPI)
 
 
-    sectorHighUGI = float(norm.cdf(meanUGI + (2*interval), meanUGI, math.sqrt(sigma2UGI)))    
+    sectorHighOPI = float(norm.cdf(meanOPI + (2*interval), meanOPI, math.sqrt(sigma2OPI)))    
 
     
-    sectorLowUGI = float(norm.cdf(meanUGI - (2*interval), meanUGI, math.sqrt(sigma2UGI)))    
+    sectorLowOPI = float(norm.cdf(meanOPI - (2*interval), meanOPI, math.sqrt(sigma2OPI)))    
 
     
-def get_Udinese_and_Novara_matches():
+def get_teamH_teamA_matches(teamH, teamA):
     
     global dataVal
-    global udinese_matches
-    global novara_matches
+    global teamH_matches
+    global teamA_matches
     
     for el in dataVal:
-        if el['home_team'] == 'Udinese' or el['away_team'] == 'Udinese':
-            udinese_matches.append(el)
+        if el['home_team'] == teamH or el['away_team'] == teamH:
+            teamH_matches.append(el)
             
-        elif el['home_team'] == 'Novara' or el['away_team'] == 'Novara':
-            novara_matches.append(el)
+        if el['home_team'] == teamA or el['away_team'] == teamA:
+            teamA_matches.append(el)
             
-def get_match_id(matches=udinese_matches):
+def get_match_id(teamH,teamA,matches):
 
     for i,el in enumerate(matches):
-        if el['home_team'] == 'Novara' and el['away_team'] == 'Udinese':
+        if el['home_team'] == teamH and el['away_team'] == teamA:
             return i
     
     return -1
             
-def get_udinese_evidence_array():
-    global udinese_matches, evidences_udinese, udinese_matches_of_intrest
+def get_team_H_evidence_array(teamH,teamA):
+    global teamH_matches, evidences_teamH, teamH_matches_of_intrest
     
-    match_id = get_match_id()    
+    match_id = get_match_id(teamH,teamA,teamH_matches)    
     
-  
-    start_index = match_id - 10;
-    end_index = match_id + 10;
+ 
+    start_index = match_id - 10
+    end_index = match_id + 10
     
-    for i,el in enumerate(udinese_matches):
+    for i,el in enumerate(teamH_matches):
         if i >= start_index and i < end_index:
-            udinese_matches_of_intrest.append(el)
-            if el['home_team'] == 'Udinese':
-                if is_high_UGI_sector(float(el['UGI_home'])):
-                    evidences_udinese.append(True)
-                else: evidences_udinese.append(False)
+            teamH_matches_of_intrest.append(el)
+            if el['home_team'] == teamH:
+                if is_high_OPI_sector(float(el['OPI_home'])):
+                    evidences_teamH.append(True)
+                else: evidences_teamH.append(False)
             else:
-                if is_high_UGI_sector(float(el['UGI_away'])):
-                    evidences_udinese.append(True)
-                else: evidences_udinese.append(False)
+                if is_high_OPI_sector(float(el['OPI_away'])):
+                    evidences_teamH.append(True)
+                else: evidences_teamH.append(False)
 
-def get_novara_evidence_array():
-    global novara_matches, evidences_novara, novara_matches_of_intrest
+def get_teamA_evidence_array(teamH,teamA):
+    global teamA_matches, evidences_teamA, teamA_matches_of_intrest
     
-    match_id = get_match_id()    
+    match_id = get_match_id(teamH,teamA,teamA_matches)    
+    print(match_id)
+    start_index = match_id - 10
+    end_index = match_id + 10
     
-    start_index = match_id - 10;
-    end_index = match_id + 10;
-    
-    for i,el in enumerate(novara_matches):
+    for i,el in enumerate(teamA_matches):
         if i >= start_index and i < end_index:
-            novara_matches_of_intrest.append(el)
-            if el['home_team'] == 'Novara':
-                if is_high_UGI_sector(float(el['UGI_home'])):
-                    evidences_novara.append(True)
-                else: evidences_novara.append(False)
+            teamA_matches_of_intrest.append(el)
+            if el['home_team'] == teamA:
+                if is_high_OPI_sector(float(el['OPI_home'])):
+                    evidences_teamA.append(True)
+                else: evidences_teamA.append(False)
             else:
-                if is_high_UGI_sector(float(el['UGI_away'])):
-                    evidences_novara.append(True)
-                else: evidences_novara.append(False)
+                if is_high_OPI_sector(float(el['OPI_away'])):
+                    evidences_teamA.append(True)
+                else: evidences_teamA.append(False)
                 
 def unfair_match():
     global dataVal
@@ -323,8 +327,8 @@ def unfair_match():
     dataVal[match_id]['shots']='9'
 
 
-def print_ugi_sector(ugi):
-    if is_high_UGI_sector(float(ugi)):
+def print_OPI_sector(OPI):
+    if is_high_OPI_sector(float(OPI)):
         return "HIGH"
     return "LOW"
     
@@ -354,8 +358,8 @@ def get_filtered_values():
                         'penalties': row['penalties'],
                         'location_home': row['location_home'],
                         'location_away': row['location_away'],
-                        'UGI_home' : row['UGI_home'], 
-                        'UGI_away' : row['UGI_away'],                                    
+                        'OPI_home' : row['OPI_home'], 
+                        'OPI_away' : row['OPI_away'],                                    
                         'homeVP' : row['homeVP'],
                         'DP' : row['DP'],
                         'awayVP' : row['awayVP'],
@@ -385,7 +389,7 @@ def filter_values():
         
        
         for row in reader:
-           if row["league"] == "I1" and row["season"] == "2012":
+           if row["league"] == "I1" and row["season"] == "2013":
                temp = {'id_odsp' : row["id_odsp"],
                        'home_team' : row["ht"],
                        'away_team': row["at"],
@@ -398,8 +402,8 @@ def filter_values():
                        'penalties': 0,
                        'location_home': [],
                        'location_away': [],
-                       'UGI_home' : 0,
-                       'UGI_away' : 0,                                          # Potential Goals Index 
+                       'OPI_home' : 0,
+                       'OPI_away' : 0,                              # Potential Goals Index 
                        'homeVP' : float(100/float(row["odd_h"])),   # home victory probability (with aggio)
                        'DP' : float(100/float(row["odd_d"])),       # draw probability (with aggio)
                        'awayVP' : float(100/float(row["odd_a"])),   # away victory probability (with aggio)
@@ -491,7 +495,7 @@ def write_filtered_dataset():
     
     with open(DATASET_PATH_FILTERED, 'w', encoding='UTF8', newline='') as f:
         fieldnames = ['id_odsp', 'home_team', 'away_team', 'home_team_goal', 'away_team_goal', 
-                      'adv_stats', 'shots', 'shots_on_target', 'post_hit', 'penalties', 'location_home','location_away', 'UGI_home', 'UGI_away', 'homeVP', 'DP', 'awayVP', 'totalP']
+                      'adv_stats', 'shots', 'shots_on_target', 'post_hit', 'penalties', 'location_home','location_away', 'OPI_home', 'OPI_away', 'homeVP', 'DP', 'awayVP', 'totalP']
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(dataVal)
@@ -516,7 +520,7 @@ def remove_aggio_from_odds():
          
          
          
-def calculate_UGI():
+def calculate_OPI():
     
     global dataVal
 
@@ -560,106 +564,102 @@ def calculate_UGI():
         
         
         if match['adv_stats'] == 'TRUE': 
-                match['UGI_home'] = float(home_type_3*3 + home_type_2*2 + home_type_1)
-                match['UGI_away'] = float(away_type_3*3 + away_type_2*2 + away_type_1)        
+                match['OPI_home'] = float(home_type_3*3 + home_type_2*2 + home_type_1)
+                match['OPI_away'] = float(away_type_3*3 + away_type_2*2 + away_type_1)        
       
 
 
 
 
+def HMM_cons(team_home='Lecce',team_away="Lazio"):
+    calculate_OPI()
+    calculate_mean_and_sigma2_OPI()
+    transition_model_calculation()
+    get_sensor_model()
+    get_teamH_teamA_matches(team_home,team_away)
+    get_team_H_evidence_array(team_home,team_away)
+    get_teamA_evidence_array(team_home,team_away)
+
+
 get_filtered_values()
-calculate_UGI()
-calculate_mean_and_sigma2_UGI()
-transition_model_calculation()
-get_sensor_model()
-get_Udinese_and_Novara_matches()
-get_udinese_evidence_array()
-get_novara_evidence_array()
-
+HMM_cons(teamH,teamA)
 
 
 transition_model = [[probOver1Over1 , probUnder1Over1], [probUnder1Over1 ,probOver1Under1]]
-sensor_model = [[probHighUgiOver, probHighUgiUnder],[probLowUgiOver, probLowUgiUnder]]
+sensor_model = [[probHighOPIOver, probHighOPIUnder],[probLowOPIOver, probLowOPIUnder]]
 hmm = HiddenMarkovModel(transition_model, sensor_model)
 
-hmm.prior=prior_udinese
-belief_udinese = forward_backward(hmm, ev=evidences_udinese)
+hmm.prior=prior_teamH
+belief_teamH = forward_backward(hmm, ev=evidences_teamH)
 
-hmm.prior = prior_novara
-belief_novara = forward_backward(hmm, ev=evidences_novara)
+hmm.prior = prior_teamA
+belief_teamA = forward_backward(hmm, ev=evidences_teamA)
 
-print()
-print()
-print("################# FAIR MATCH ##################")
-print("TARGET MATCH: Novara - Udinese")
-print()
-print(udinese_matches_of_intrest[10]['home_team'], " ------ ", udinese_matches_of_intrest[10]['away_team'])
-print("   " + udinese_matches_of_intrest[10]['home_team_goal'], end="               ")
-print(udinese_matches_of_intrest[10]['away_team_goal'])
-print()
-if is_over1goal(int(udinese_matches_of_intrest[10]['away_team_goal'])):
-    print("Udinese scored more than one goal -> ",  end=" probability of: ")
-    print( str("%.2f" % float(belief_udinese[10][0])))
-else:
-    print("Udinese scored less than one goal -> ",  end=" probability of: ")
-    print( str("%.2f" % float(belief_udinese[10][1])))
-  
+def print_color(level):
+    level = float(level)
 
-if is_over1goal(int(udinese_matches_of_intrest[10]['home_team_goal'])):
-    print("Novara scored more than one goal -> ",  end=" probability of: ")
-    print( str("%.2f" % float(belief_novara[10][0])))
-else:
-    print("Novara scored less than one goal -> ",  end=" probability of ")
-    print( str("%.2f" % float(belief_novara[10][1])))
+    if level <= 0.30:
+        print(Back.RED + '_______'+ Style.RESET_ALL)
+    elif level > 0.30 and level <= 0.50:
+        print(Back.YELLOW + '_______'+ Style.RESET_ALL)
+    elif level > 0.50 and level <= 0.70:
+        print(Back.GREEN + '_______'+ Style.RESET_ALL)
+    else:
+        print(Back.WHITE + '_______' + Style.RESET_ALL)
+        
+        
+def print_results(team, array_of_matches, belief,i):
 
+    print(Style.RESET_ALL + "  " +array_of_matches[i]['home_team'],"        ",array_of_matches[i]['away_team'])
+    print("  " +" ",array_of_matches[i]['home_team_goal'],"            ",array_of_matches[i]['away_team_goal'])
+    if array_of_matches[i]['home_team'] == team: 
 
-
-unfair_match()
-
-calculate_UGI()
-calculate_mean_and_sigma2_UGI()
-transition_model_calculation()
-get_sensor_model()
-get_Udinese_and_Novara_matches()
-get_udinese_evidence_array()
-get_novara_evidence_array()
+        if is_over1goal(int(array_of_matches[i]['home_team_goal'])):
+            print("  " + team + " scored more than one goal. PROBABILITY: ", str("%.2f" % belief[i][0]), end=" ")
+            print_color(belief[i][0])
+        else : 
+            print("  " +team, " scored less then 2 goals. PROBABILITY: ", str("%.2f" % belief[i][1]), end=" ")
+            print_color(belief[i][1])
+    else:
+        if is_over1goal(int(array_of_matches[i]['away_team_goal'])):
+            print("  " +team + " scored more than one goal. PROBABILITY: ", str("%.2f" % belief[i][0]),end=" ")
+            print_color(belief[i][0])
+        else : 
+            print("  " +team, " scored less then 2 goals. PROBABILITY: ", str("%.2f" % belief[i][1]),end=" ")
+            print_color(belief[i][1])
 
 
-transition_model = [[probOver1Over1 , probUnder1Over1], [probUnder1Over1 ,probOver1Under1]]
-sensor_model = [[probHighUgiOver, probHighUgiUnder],[probLowUgiOver, probLowUgiUnder]]
-hmm = HiddenMarkovModel(transition_model, sensor_model)
 
-hmm.prior=prior_udinese
-belief_udinese = forward_backward(hmm, ev=evidences_udinese)
-
-hmm.prior = prior_novara
-belief_novara = forward_backward(hmm, ev=evidences_novara)
-
-
+print(teamH)
+for i in range(0,14):
+    if teamH_matches_of_intrest[i]['away_team']==teamA:
+        print("------------------------- FIXED MATCH -------------------")
+        print_results(teamH, teamH_matches_of_intrest, belief_teamH, i)
+        print("---------------------------------------------------------")
+    else:
+        print_results(teamH, teamH_matches_of_intrest, belief_teamH, i)
+        
+    print()
+    print()
 
 print()
 print()
-print("################# UNFAIR MATCH ##################")
-print("Supposing to rig the match and fake it with this result and put a less number of shots for udinese and novara")
-print(udinese_matches_of_intrest[10]['home_team'], " ------ ", udinese_matches_of_intrest[10]['away_team'])
-print("   2", end="               ")
-print(2)
-
+print("--------------------------------------------------------------")
 print()
-if is_over1goal(int(udinese_matches_of_intrest[10]['away_team_goal'])):
-    print("Udinese scored more than one goal -> ",  end=" probability of: ")
-    print( str("%.2f" % float(belief_udinese[10][0])))
-else:
-    print("Udinese scored less than one goal",  end=" probability: of ")
-    print( str("%.2f" % float(belief_udinese[10][1])))
-  
+print()
+print(teamA)
+print()
 
-if is_over1goal(int(udinese_matches_of_intrest[10]['home_team_goal'])):
-    print("Novara scored more than one goal -> ",  end=" probability of: ")
-    print( str("%.2f" % float(belief_novara[10][0])))
-else:
-    print("Novara scored less than one goal",  end=" probability: of ")
-    print( str("%.2f" % float(belief_novara[10][1])))
+for i in range(0,14):
+    if teamA_matches_of_intrest[i]['home_team']==teamH:
+        print("------------------------ FIXED MATCH -----------------------")
+        print_results(teamA, teamA_matches_of_intrest, belief_teamA, i)
+        print("------------------------------------------------------------")
+    else:
+        print_results(teamA, teamA_matches_of_intrest, belief_teamA, i)
+        
+    print()
+    print()
 
 
 
