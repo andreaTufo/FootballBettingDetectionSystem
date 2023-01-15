@@ -55,7 +55,7 @@ The \textit{modus operandi} is always the same, "bribe and earn", so "sport crim
 Implementation\index{Implementation}}
 The main goal was to develop a system that rely and analyze football matches data, showing a percentage of "possible unfair match". The basic idea was to retrive some parameters and values from raw filtered data, collect them, and then looking for some anomalies. In the code has been used as case of study the 2012/2013 season of Serie A, so every match that belongs to the regular season. In my case there is one important metric, which is called \textit{"OPI" (Offensive Potential Index)} and has the role to mesure how a team has been dangerous and offensive during a match, so this value is computed for each football team. 
 
-formula OPIOPI
+
 
 \section{
 Dataset}
@@ -74,7 +74,7 @@ During the first run of the algorithm a "filtered\_dataset.csv" file is generate
 
 \subsection{
 Offensive Potential Index}
-Pratically in my program I worked on only one json object, which contains all the data filtered and makes more easy get all the metrics from every single match. The biggest challenge for me was to find out some parameters that would have highlighted how much offensive a team has been during a match in average. And my idea was to analyze every match looking at the shots made by a team and their locations. So for all matches I group the two arrays of shots locations (one for home team and one for away team) into three group, each of this group has a weight that refers to the possibility to score, thus, fisrt group has weight one, so very low dangerous shot, the second one has weight two, and the third one has three as weight, and so high chances to score.\\
+Pratically in my program I worked on only one json object, which contains all the data filtered and makes more easy get all the metrics from every single match. The biggest challenge for me was to find out some parameters that would have highlighted how much offensive a team has been during a match in average. And my idea was to analyze every match looking at the shots made by a team and their locations. So for all matches I group the two arrays of shots locations (one for home team and one for away team) into three group, each of this group has a weight that refers to the possibility to score, thus, first group has weight one, so very low dangerous shot, the second one has weight two, and the third one has three as weight, and so high chances to score.\\
 Then I caluclated the cardinality of these three sets and after this I computed the \textit{OPI} summing up the cardinalities timed for the weight of the group on which they belong to.
 
 
